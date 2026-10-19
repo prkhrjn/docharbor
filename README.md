@@ -26,7 +26,7 @@ document expires before or during a scheduled period.
 
 [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=prkhrjn&repository=docharbor&category=integration)
 
-**Note:** The GitHub username is a placeholder until the repository is created.
+**GitHub repository:** https://github.com/prkhrjn/docharbor
 
 ### Add DocHarbor to Home Assistant
 
