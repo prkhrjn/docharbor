@@ -58,6 +58,19 @@ Until DocHarbor is listed in HACS, installation will require adding its GitHub r
 
 The dashboard JavaScript resource is registered automatically in storage-mode Lovelace.
 
+### Dashboard card not appearing?
+
+After installing DocHarbor and restarting Home Assistant, refresh
+your browser using **Cmd + Shift + R** (Mac) or
+**Ctrl + Shift + R** (Windows/Linux).
+
+Then reopen **Edit Dashboard > Add Card** and search for
+**DocHarbor Documents**.
+
+If the card still does not appear, check that DocHarbor is loaded
+under **Settings > Devices & services**.
+
+
 ## Configuration
 
 Create directories through the DocHarbor integration configuration flow.
