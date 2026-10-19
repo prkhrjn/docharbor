@@ -1,0 +1,126 @@
+
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up DocHarbor Registry",
+        "description": "Choose a name for this document registry.",
+        "data": {
+          "instance_name": "Instance name",
+          "directory_type": "Directory type"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "DocHarbor",
+        "description": "Manage certificates, categories, and schedule dates.",
+        "menu_options": {
+          "add_document": "Add a certificate or document",
+          "edit_select": "Edit a certificate or document",
+          "remove_document": "Remove a certificate or document",
+          "manage_categories": "Manage certificate categories",
+          "sailing_dates": "Schedule Planner",
+          "notification_devices": "Select Devices to Notify"
+        }
+      },
+      "add_document": {
+        "title": "Add certificate or document",
+        "description": "Enter the certificate details. Issue date and UIN are optional.",
+        "data": {
+          "name": "Certificate / document name",
+          "uin": "Certificate number / UIN",
+          "issue_date": "Date of issue",
+          "expiry_date": "Expiry date",
+          "category": "Certificate category",
+          "renewal_lead_days": "Remind me this many days before expiry",
+          "notes": "Notes"
+        }
+      },
+      "edit_select": {
+        "title": "Select a document to edit",
+        "data": {
+          "document_id": "Choose document"
+        }
+      },
+      "edit_document": {
+        "title": "Edit certificate or document",
+        "data": {
+          "name": "Certificate / document name",
+          "uin": "Certificate number / UIN",
+          "issue_date": "Date of issue",
+          "expiry_date": "Expiry date",
+          "category": "Certificate category",
+          "renewal_lead_days": "Remind me this many days before expiry",
+          "notes": "Notes"
+        }
+      },
+      "remove_document": {
+        "title": "Remove certificate or document",
+        "description": "The selected record will be permanently removed.",
+        "data": {
+          "document_id": "Choose document to remove"
+        }
+      },
+      "manage_categories": {
+        "title": "Manage certificate categories",
+        "description": "Add, rename, or remove your own categories.",
+        "menu_options": {
+          "add_category": "Add a category",
+          "rename_category": "Rename a category",
+          "remove_category": "Remove a category"
+        }
+      },
+      "add_category": {
+        "title": "Add certificate category",
+        "data": {
+          "name": "New category name"
+        }
+      },
+      "rename_category": {
+        "title": "Rename certificate category",
+        "data": {
+          "category": "Category to rename",
+          "new_name": "New category name"
+        }
+      },
+      "remove_category": {
+        "title": "Remove certificate category",
+        "data": {
+          "category": "Category to remove"
+        }
+      },
+      "sailing_dates": {
+        "title": "Schedule Planner",
+        "description": "Set your scheduled start and end dates.",
+        "data": {
+          "joining_date": "Scheduled start date",
+          "signoff_date": "Scheduled end date",
+          "buffer_days": "Planning buffer (days)"
+        }
+      },
+      "notification_devices": {
+        "title": "Select Devices to Notify",
+        "description": "Choose which mobile devices receive reminder notifications.",
+        "data": {
+          "notify_services": "Notify Devices"
+        }
+      }
+    },
+    "abort": {
+      "no_documents_to_edit": "There are no documents to edit.",
+      "no_documents_to_remove": "There are no documents to remove.",
+      "document_not_found": "The selected document could not be found.",
+      "no_categories": "There are no categories to rename.",
+      "no_categories_to_remove": "There are no categories to remove.",
+      "cannot_remove_other": "The Other category cannot be removed.",
+      "category_in_use": "At least one document uses this category. Reassign those documents before removing it.",
+      "sailing_dates_unavailable": "Schedule dates are only available for Schedule-Based directories."
+    },
+    "error": {
+      "invalid_date_range": "Issue Date cannot be after Expiry Date."
+    }
+  }
+}

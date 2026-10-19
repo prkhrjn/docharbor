@@ -1,0 +1,224 @@
+
+add_document:
+  name: Add document
+  description: Add a document to the selected registry.
+  fields:
+    directory:
+      name: Registry
+      description: Select the target registry.
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    name:
+      name: Document name
+      required: true
+      selector:
+        text:
+    uin:
+      name: UIN or certificate number
+      selector:
+        text:
+    issue_date:
+      name: Issue date
+      selector:
+        text:
+    expiry_date:
+      name: Expiry date
+      description: Enter as YYYY-MM-DD.
+      required: true
+      selector:
+        text:
+    category:
+      name: Category
+      selector:
+        text:
+    renewal_lead_days:
+      name: Renewal lead time (days)
+      selector:
+        number:
+          min: 0
+          max: 730
+          mode: box
+    notes:
+      name: Notes
+      selector:
+        text:
+
+update_document:
+  name: Update document
+  description: Edit a document in the selected registry using its document ID.
+  fields:
+    directory:
+      name: Registry
+      description: Select the target registry.
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    document_id:
+      name: Document ID
+      required: true
+      selector:
+        text:
+    name:
+      name: Document name
+      selector:
+        text:
+    uin:
+      name: UIN or certificate number
+      selector:
+        text:
+    issue_date:
+      name: Issue date
+      selector:
+        text:
+    expiry_date:
+      name: Expiry date
+      description: Enter as YYYY-MM-DD.
+      selector:
+        text:
+    category:
+      name: Category
+      selector:
+        text:
+    renewal_lead_days:
+      name: Renewal lead time (days)
+      selector:
+        number:
+          min: 0
+          max: 730
+          mode: box
+    notes:
+      name: Notes
+      selector:
+        text:
+
+remove_document:
+  name: Remove document
+  description: Remove a document from the selected registry.
+  fields:
+    directory:
+      name: Registry
+      description: Select the target registry.
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    document_id:
+      name: Document ID
+      required: true
+      selector:
+        text:
+
+set_schedule_dates:
+  name: Set schedule dates
+  description: Set the scheduled start and end dates for a directory.
+  fields:
+    directory:
+      name: Directory
+      description: Select the target directory.
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    start_date:
+      name: Scheduled start date
+      description: Enter as YYYY-MM-DD.
+      selector:
+        text:
+    end_date:
+      name: Scheduled end date
+      description: Enter as YYYY-MM-DD.
+      selector:
+        text:
+    buffer_days:
+      name: Planning buffer (days)
+      selector:
+        number:
+          min: 0
+          max: 180
+          mode: box
+
+set_sailing_dates:
+  name: Set schedule dates
+  description: Set schedule dates for the selected directory.
+  fields:
+    directory:
+      name: Registry
+      description: Select the target registry.
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    joining_date:
+      name: Scheduled start date
+      description: Enter as YYYY-MM-DD.
+      selector:
+        text:
+    signoff_date:
+      name: Scheduled end date
+      description: Enter as YYYY-MM-DD.
+      selector:
+        text:
+    buffer_days:
+      name: Planning buffer (days)
+      selector:
+        number:
+          min: 0
+          max: 180
+          mode: box
+
+add_category:
+  name: Add category
+  description: Add a category to the selected directory.
+  fields:
+    directory:
+      name: Directory
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    name:
+      name: Category name
+      required: true
+      selector:
+        text:
+
+remove_category:
+  name: Remove category
+  description: Remove an unused category from the selected directory.
+  fields:
+    directory:
+      name: Directory
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    name:
+      name: Category name
+      required: true
+      selector:
+        text:
+
+send_test_notification:
+  name: Send test notification
+  description: Send a test notification to the selected directory devices.
+  fields:
+    directory:
+      name: Directory
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+
+run_reminder_now:
+  name: Run reminder now
+  description: Run a manual renewal digest for the selected directory.
+  fields:
+    directory:
+      name: Directory
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
