@@ -155,7 +155,7 @@ def create_notification_handlers(hass, entry, data, store):
                         },
                         blocking=True,
                     )
-                except HomeAssistantError:
+                except (HomeAssistantError, OSError):
                     _LOGGER.exception(
                         "Could not clear Live Activity using %s",
                         service_name,
@@ -339,7 +339,7 @@ def create_notification_handlers(hass, entry, data, store):
                     entry.entry_id,
                 )
 
-            except HomeAssistantError:
+            except (HomeAssistantError, OSError):
                 _LOGGER.exception(
                     "Reminder delivery failed using %s for registry %s",
                     service_name,
@@ -431,7 +431,7 @@ def create_notification_handlers(hass, entry, data, store):
                     "Test notification accepted by %s",
                     service_name,
                 )
-            except HomeAssistantError:
+            except (HomeAssistantError, OSError):
                 _LOGGER.exception(
                     "Test notification failed using %s",
                     service_name,

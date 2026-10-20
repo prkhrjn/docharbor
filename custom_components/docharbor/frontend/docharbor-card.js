@@ -4711,9 +4711,9 @@ class SeafarerDocumentsCard extends HTMLElement {
     dialog.open = true;
   }
 }
-if (!customElements.get("seafarer-documents-card")) {
+if (!customElements.get("docharbor-card")) {
   customElements.define(
-    "seafarer-documents-card",
+    "docharbor-card",
     SeafarerDocumentsCard
   );
 }
@@ -4723,10 +4723,10 @@ if (!customElements.get("seafarer-documents-card")) {
 window.customCards = window.customCards || [];
 
 if (!window.customCards.some(
-  card => card.type === "seafarer-documents-card"
+  card => card.type === "docharbor-card"
 )) {
   window.customCards.push({
-    type: "seafarer-documents-card",
+    type: "docharbor-card",
     name: "DocHarbor Documents",
     description: "Manage documents, expiry reminders and scheduled periods.",
     preview: false,

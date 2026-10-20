@@ -152,16 +152,14 @@ async def _async_register_dashboard_resource(hass: HomeAssistant) -> None:
 
     await resources._async_ensure_loaded()
 
-    card_url = "/docharbor/seafarer-documents-card.js"
+    card_url = "/docharbor/docharbor-card.js"
 
     existing_urls = {
         item.get("url", "").split("?")[0]
         for item in resources.async_items()
     }
 
-    legacy_url = "/local/seafarer-documents-card.js"
-
-    if card_url in existing_urls or legacy_url in existing_urls:
+    if card_url in existing_urls:
         _LOGGER.info(
             "DocHarbor dashboard resource already exists; "
             "skipping automatic registration"
@@ -183,14 +181,14 @@ async def async_setup(
     """Set up the integration domain."""
     hass.data.setdefault(DOMAIN, {})
 
-    card_path = Path(__file__).parent / "frontend" / "seafarer-documents-card.js"
+    card_path = Path(__file__).parent / "frontend" / "docharbor-card.js"
     if not card_path.is_file():
         _LOGGER.error("DocHarbor dashboard card is missing: %s", card_path)
         return False
 
     await hass.http.async_register_static_paths(
         [StaticPathConfig(
-            "/docharbor/seafarer-documents-card.js",
+            "/docharbor/docharbor-card.js",
             str(card_path),
             cache_headers=False,
         )]
