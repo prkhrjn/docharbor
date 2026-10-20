@@ -120,7 +120,7 @@
       "sailing_dates_unavailable": "Schedule dates are only available for Schedule-Based directories."
     },
     "error": {
-      "invalid_date_range": "Issue Date cannot be after Expiry Date "
+      "invalid_date_range": "Issue Date cannot be after Expiry Date"
     }
   }
 }
