@@ -1,4 +1,390 @@
 /* DocHarbor migration build: updated production card UI; services and config flow use docharbor. */
+const DOCHARBOR_STYLE_PRESETS = Object.freeze({
+  color: ["var(--primary-text-color)", "var(--primary-color)", "#ffffff"],
+  background: [
+    "var(--card-background-color)",
+    "transparent",
+    "var(--primary-background-color)",
+  ],
+  font_size: ["12px", "14px", "16px", "18px", "20px"],
+  border: ["none", "1px solid var(--divider-color)", "2px solid"],
+  border_radius: ["0px", "6px", "12px", "20px"],
+  padding: ["4px", "8px", "12px", "16px", "24px"],
+  margin: ["0px", "4px", "8px", "12px", "16px"],
+  box_shadow: [
+    "none",
+    "var(--ha-card-box-shadow, none)",
+    "0 4px 12px rgba(0, 0, 0, 0.15)",
+  ],
+});
+
+class DocHarborCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+  }
+
+  setConfig(config) {
+    this._config = { ...config };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+  }
+
+  _updateConfig(key, value) {
+    this._config = {
+      ...this._config,
+      [key]: value,
+    };
+
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      detail: { config: this._config },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
+  _renderStyleControls() {
+    const groupSelector = this.shadowRoot.querySelector(
+      "[data-style-group]"
+    );
+    const container = this.shadowRoot.querySelector(
+      "#style-properties"
+    );
+
+    if (!groupSelector || !container) return;
+
+    const buttonField = this.shadowRoot.querySelector(
+      "#button-target-field"
+    );
+    const buttonSelector = this.shadowRoot.querySelector(
+      "[data-button-target]"
+    );
+
+    DOCHARBOR_BUTTON_TARGETS.forEach(target => {
+      const option = document.createElement("option");
+      option.value = target;
+      option.textContent = target.replaceAll("_", " ");
+      buttonSelector.appendChild(option);
+    });
+
+    if (this._selectedStyleGroup) {
+      groupSelector.value = this._selectedStyleGroup;
+    }
+    if (this._selectedButtonTarget) {
+      buttonSelector.value = this._selectedButtonTarget;
+    }
+
+    const renderProperties = () => {
+      const group = groupSelector.value;
+      this._selectedStyleGroup = group;
+      this._selectedButtonTarget = buttonSelector.value;
+      const isButton = group === "buttons";
+      buttonField.hidden = !isButton;
+
+      const target = isButton
+        ? buttonSelector.value
+        : group;
+
+      const configKey = isButton
+        ? `button_${target}`
+        : group;
+
+      container.replaceChildren();
+
+      Object.entries(DOCHARBOR_STYLE_PROPERTIES).forEach(
+        ([property, cssProperty]) => {
+          const row = document.createElement("div");
+          row.className = "style-row";
+
+          const label = document.createElement("label");
+          label.textContent = cssProperty;
+
+          const selector = document.createElement("select");
+          const current = this._config.styles?.[configKey]?.[property];
+
+          const options = [
+            ["theme", "Active HA Theme"],
+            ...DOCHARBOR_STYLE_PRESETS[property].map(
+              (value, index) => [`preset:${index}`, value]
+            ),
+            ["custom", "Custom CSS Value"],
+          ];
+
+          options.forEach(([value, text]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = text;
+            selector.appendChild(option);
+          });
+
+          const matchingPreset =
+            DOCHARBOR_STYLE_PRESETS[property].indexOf(current);
+
+          selector.value = current === undefined
+            ? "theme"
+            : matchingPreset >= 0
+              ? `preset:${matchingPreset}`
+              : "custom";
+
+          const input = document.createElement("input");
+          input.placeholder = `Enter custom ${cssProperty}`;
+          input.value = current ?? "";
+          input.hidden = selector.value !== "custom";
+
+          const error = document.createElement("div");
+          error.className = "style-error";
+
+          const saveValue = value => {
+            if (
+              value !== undefined &&
+              !docharborValidateStyleValue(property, value)
+            ) {
+              error.textContent = "Invalid CSS value";
+              return;
+            }
+
+            error.textContent = "";
+
+            const styles = structuredClone(this._config.styles || {});
+            styles[configKey] = { ...(styles[configKey] || {}) };
+
+            if (value === undefined) {
+              delete styles[configKey][property];
+            } else {
+              styles[configKey][property] = value;
+            }
+
+            this._updateConfig("styles", styles);
+          };
+
+          selector.addEventListener("change", () => {
+            const mode = selector.value;
+            input.hidden = mode !== "custom";
+
+            if (mode === "theme") {
+              saveValue(undefined);
+            } else if (mode.startsWith("preset:")) {
+              const index = Number(mode.split(":")[1]);
+              saveValue(DOCHARBOR_STYLE_PRESETS[property][index]);
+            }
+          });
+
+          input.addEventListener("change", () => {
+            saveValue(input.value.trim());
+          });
+
+          row.append(label, selector, input, error);
+          container.appendChild(row);
+        }
+      );
+    };
+
+    groupSelector.addEventListener("change", renderProperties);
+    buttonSelector.addEventListener("change", renderProperties);
+    renderProperties();
+  }
+
+  _render() {
+    const fields = [
+      {
+        key: "alert_expires_before_schedule",
+        label: "Expires Before Schedule",
+        default: "Expires before schedule.",
+      },
+      {
+        key: "alert_expires_during_schedule",
+        label: "Expires During Schedule",
+        default: "Expires during schedule.",
+      },
+    ];
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { display: block; }
+        .field { margin-bottom: 20px; }
+        label {
+          display: block;
+          margin-bottom: 8px;
+          color: var(--primary-text-color);
+          font-weight: 500;
+        }
+        textarea {
+          box-sizing: border-box;
+          width: 100%;
+          padding: 12px;
+          border: 1px solid var(--divider-color);
+          border-radius: var(--ha-card-border-radius, 8px);
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
+          font: inherit;
+          resize: vertical;
+        }
+        select, input {
+          box-sizing: border-box;
+          width: 100%;
+          min-height: 40px;
+          padding: 8px;
+          border: 1px solid var(--divider-color);
+          border-radius: var(--ha-card-border-radius, 8px);
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
+          font: inherit;
+        }
+        .style-row { margin-bottom: 16px; }
+        .style-row input { margin-top: 8px; }
+        .style-error {
+          color: var(--error-color);
+          font-size: 12px;
+          margin-top: 4px;
+        }
+        button {
+          margin-top: 8px;
+          color: var(--primary-color);
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+      </style>
+      <h3>Appearance</h3>
+      <div class="field">
+        <label for="style-group">Customize component</label>
+        <select id="style-group" data-style-group>
+          ${Object.entries(DOCHARBOR_STYLE_GROUPS).map(
+            ([key, label]) => `<option value="${key}">${label}</option>`
+          ).join("")}
+        </select>
+      </div>
+      <div class="field" id="button-target-field" hidden>
+        <label for="button-target">Customize button</label>
+        <select id="button-target" data-button-target></select>
+      </div>
+      <div class="field" id="style-properties"></div>
+      <hr>
+      <h3>Sailing Schedule Alerts</h3>
+      ${fields.map(field => `
+        <div class="field">
+          <label>${field.label}</label>
+          <textarea data-key="${field.key}" rows="2"></textarea>
+          <div class="alert-preview" data-preview="${field.key}"></div>
+          <button type="button" data-reset="${field.key}">
+            Reset to Default
+          </button>
+        </div>
+      `).join("")}
+    `;
+
+    this._renderStyleControls();
+
+    fields.forEach(field => {
+      const textarea = this.shadowRoot.querySelector(
+        `textarea[data-key="${field.key}"]`
+      );
+      textarea.value = this._config[field.key] ?? field.default;
+
+      const preview = this.shadowRoot.querySelector(
+        `[data-preview="${field.key}"]`
+      );
+
+      const updatePreview = () => {
+        preview.textContent = textarea.value || field.default;
+      };
+
+      updatePreview();
+
+      textarea.addEventListener("input", updatePreview);
+
+      textarea.addEventListener("change", event => {
+        this._updateConfig(field.key, event.target.value);
+      });
+
+      this.shadowRoot.querySelector(
+        `button[data-reset="${field.key}"]`
+      ).addEventListener("click", () => {
+        textarea.value = field.default;
+        updatePreview();
+
+        const updated = { ...this._config };
+        delete updated[field.key];
+        this._config = updated;
+
+        this.dispatchEvent(new CustomEvent("config-changed", {
+          detail: { config: updated },
+          bubbles: true,
+          composed: true,
+        }));
+      });
+    });
+  }
+}
+
+if (!customElements.get("docharbor-card-editor")) {
+  customElements.define("docharbor-card-editor", DocHarborCardEditor);
+}
+
+const DOCHARBOR_STYLE_GROUPS = Object.freeze({
+  main_card: "Main Card",
+  document_tiles: "Document Tiles",
+  form_inputs: "Form Input Fields",
+  selectors: "Selectors & Multi-selectors",
+  buttons: "Action Buttons",
+  dialogs: "Dialogs & Panels",
+  alerts: "Alerts & Status",
+});
+
+const DOCHARBOR_STYLE_PROPERTIES = Object.freeze({
+  color: "color",
+  background: "background-color",
+  font_size: "font-size",
+  border: "border",
+  border_radius: "border-radius",
+  padding: "padding",
+  margin: "margin",
+  box_shadow: "box-shadow",
+});
+
+const DOCHARBOR_BUTTON_TARGETS = Object.freeze([
+  "all",
+  "add_document",
+  "edit_document",
+  "add_category",
+  "edit_category",
+  "add_directory",
+  "edit_directory",
+  "notify_devices",
+  "save",
+  "done",
+  "cancel",
+  "clear_date",
+  "delete",
+]);
+
+function docharborValidateStyleValue(property, value) {
+  if (
+    !Object.prototype.hasOwnProperty.call(
+      DOCHARBOR_STYLE_PROPERTIES, property
+    )
+  ) {
+    return false;
+  }
+
+  if (typeof value !== "string" || !value.trim()) {
+    return false;
+  }
+
+  if (value.length > 200) {
+    return false;
+  }
+
+  return CSS.supports(
+    DOCHARBOR_STYLE_PROPERTIES[property],
+    value.trim()
+  );
+}
+
 class SeafarerDocumentsCard extends HTMLElement {
   constructor() {
     super();
@@ -35,6 +421,8 @@ class SeafarerDocumentsCard extends HTMLElement {
   setConfig(config) {
     this._config = {
       title: "Documents",
+      alert_expires_before_schedule: "Expires before schedule.",
+      alert_expires_during_schedule: "Expires during schedule.",
       ...config,
     };
     this._render(true);
@@ -311,6 +699,123 @@ class SeafarerDocumentsCard extends HTMLElement {
       return a.localeCompare(b);
     });
   }
+  _syncDialogCustomStyles(root) {
+    if (!root || !root.querySelector) return;
+
+    const source = this.shadowRoot.querySelector(
+      "style[data-docharbor-custom]"
+    );
+
+    if (!source) return;
+
+    let target = root.querySelector(
+      "style[data-docharbor-custom]"
+    );
+
+    if (!target) {
+      target = document.createElement("style");
+      target.dataset.docharborCustom = "";
+    }
+
+    target.textContent = source.textContent;
+    root.appendChild(target);
+  }
+
+  _applyCustomStyles() {
+    const styles = this._config.styles || {};
+
+    const selectors = {
+      main_card: ["ha-card"],
+      document_tiles: [".document-tile"],
+      form_inputs: [
+        ".form-field input", ".form-field textarea",
+        ".document-form input", ".document-form textarea",
+        ".directory-fields input", ".notify-form input",
+        ".add-document-content input", ".edit-document-content input"
+      ],
+      selectors: [
+        "select", ".device-picker-panel",
+        ".device-picker-trigger", ".device-picker-options"
+      ],
+      buttons: ["button", "ha-button"],
+      dialogs: [
+        ".form-dialog", ".details-dialog",
+        ".add-document-content", ".edit-document-content",
+        ".directory-content", ".manager-content",
+        ".notify-content", ".category-dialog-content",
+        ".sailing-dates-content"
+      ],
+      alerts: [
+        ".tile-sailing-warning", ".category-warning",
+        ".form-error", ".notify-error", ".directory-error"
+      ],
+      button_all: ["button"],
+      button_add_document: ["#add-document-button"],
+      button_edit_document: [".edit-document-button"],
+      button_add_category: ["#add-category-button"],
+      button_edit_category: [".edit-category-button"],
+      button_add_directory: ["#create-directory-action"],
+      button_edit_directory: ["#edit-directory-action"],
+      button_notify_devices: ["#notify-devices-button"],
+      button_save: [".save-button", ".submit-button"],
+      button_done: [".device-picker-done"],
+      button_cancel: [".cancel-button"],
+      button_clear_date: [".clear-sailing-dates-button"],
+      button_delete: [".delete-document-button", ".delete-category-button"],
+    };
+
+    const rules = [];
+
+    const orderedGroups = Object.keys(styles).sort((a, b) => {
+      const priority = group => {
+        if (group === "buttons" || group === "button_all") return 1;
+        if (group.startsWith("button_")) return 2;
+        return 0;
+      };
+      return priority(a) - priority(b);
+    });
+
+    for (const group of orderedGroups) {
+      const properties = styles[group];
+      const targets = selectors[group];
+      if (!targets || !properties || typeof properties !== "object") {
+        continue;
+      }
+
+      const declarations = [];
+
+      for (const [property, value] of Object.entries(properties)) {
+        if (!docharborValidateStyleValue(property, value)) continue;
+
+        const cssProperty = DOCHARBOR_STYLE_PROPERTIES[property];
+        declarations.push(`${cssProperty}: ${value} !important`);
+      }
+
+      if (declarations.length) {
+        const effectiveTargets = group.startsWith("button_") &&
+          group !== "button_all"
+          ? targets.map(selector => `:is(#docharbor-button-override, ${selector})${selector}`)
+          : targets;
+
+        rules.push(
+          `${effectiveTargets.join(", ")} { ${declarations.join("; ")}; }`
+        );
+      }
+    }
+
+    let customStyle = this.shadowRoot.querySelector(
+      "style[data-docharbor-custom]"
+    );
+
+    if (!customStyle) {
+      customStyle = document.createElement("style");
+      customStyle.dataset.docharborCustom = "";
+      this.shadowRoot.appendChild(customStyle);
+    }
+
+    customStyle.textContent = rules.join("\n");
+  }
+
   _render(force = false) {
     if (!this._hass?.states) return;
     if (!this._initialized || force) {
@@ -1774,6 +2279,7 @@ class SeafarerDocumentsCard extends HTMLElement {
         });
       this._initialized = true;
     }
+    this._applyCustomStyles();
     this._updateContent();
   }
   _updateContent() {
@@ -1931,10 +2437,14 @@ class SeafarerDocumentsCard extends HTMLElement {
       }
       const sailingWarnings = [];
       if (document.expiresDuringSailing) {
-        sailingWarnings.push("Expires during scheduled period");
+        sailingWarnings.push(
+          this._config.alert_expires_during_schedule
+        );
       }
       if (document.expiresBeforeJoining) {
-        sailingWarnings.push("Expires before scheduled start");
+        sailingWarnings.push(
+          this._config.alert_expires_before_schedule
+        );
       }
       if (document.renewBeforeJoining) {
         sailingWarnings.push("Renew before scheduled start");
@@ -2013,6 +2523,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach((style) => {
       overlayRoot.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(overlayRoot));
     backdrop.style.position = "fixed";
     backdrop.style.inset = "0";
     backdrop.style.zIndex = "1";
@@ -2056,6 +2567,7 @@ class SeafarerDocumentsCard extends HTMLElement {
         this.shadowRoot.querySelectorAll("style").forEach((style) => {
           root.appendChild(style.cloneNode(true));
         });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
         const template = document.createElement("template");
         template.innerHTML = `
 
@@ -2531,6 +3043,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach((style) => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const isCreate = action === "create";
     const title = isCreate ? "Create Directory" : "Edit Directory";
     const template = document.createElement("template");
@@ -2837,6 +3350,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach(style => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const template = document.createElement("template");
     template.innerHTML = `
       <style>
@@ -3164,6 +3678,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach(style => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const template = document.createElement("template");
     template.innerHTML = `
       <style>
@@ -3538,6 +4053,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach(style => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const template = document.createElement("template");
     template.innerHTML = `
       <style>
@@ -3865,6 +4381,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach(style => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const template = window.document.createElement("template");
     template.innerHTML = `
       <style>
@@ -4249,6 +4766,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach(style => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const dialog = window.document.createElement(
       "ha-adaptive-dialog"
     );
@@ -4410,6 +4928,10 @@ class SeafarerDocumentsCard extends HTMLElement {
     this._activeDialog = host;
     dialog.open = true;
   }
+  static getConfigElement() {
+    return document.createElement("docharbor-card-editor");
+  }
+
   static getStubConfig() {
     return { title: "Documents" };
   }
@@ -4461,6 +4983,7 @@ class SeafarerDocumentsCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("style").forEach(style => {
       root.appendChild(style.cloneNode(true));
     });
+    queueMicrotask(() => this._syncDialogCustomStyles(root));
     const template = document.createElement("template");
     template.innerHTML = `
       <style>
