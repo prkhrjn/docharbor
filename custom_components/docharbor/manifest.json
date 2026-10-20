@@ -3,6 +3,7 @@
   "name": "DocHarbor",
   "version": "0.2.0",
   "documentation": "https://github.com/prkhrjn/docharbor",
+  "issue_tracker": "https://github.com/prkhrjn/docharbor/issues",
   "dependencies": [
     "http",
     "lovelace"
