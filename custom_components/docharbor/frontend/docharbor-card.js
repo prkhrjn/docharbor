@@ -764,7 +764,17 @@ class SeafarerDocumentsCard extends HTMLElement {
       button_delete: [".delete-document-button", ".delete-category-button"],
     };
 
-    const rules = [];
+    const rules = [
+      `.cancel-button,
+        .form-actions .cancel-button,
+        .notify-actions .cancel-button,
+        .directory-actions .cancel-button,
+        .dialog-body .cancel-button {
+          color: var(--primary-text-color, inherit) !important;
+          background: var(--card-background-color, transparent) !important;
+          border: 1px solid var(--divider-color, currentColor) !important;
+        }`
+    ];
 
     const orderedGroups = Object.keys(styles).sort((a, b) => {
       const priority = group => {
@@ -825,7 +835,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           :host {
             display: block;
             color: var(--primary-text-color);
-            --sd-tile-background: var(--ha-card-background, var(--card-background-color));
+            --sd-tile-background: var(--secondary-background-color, var(--card-background-color));
             --sd-tile-radius: 14px;
             --sd-tile-padding: 14px;
             --sd-tile-gap: 12px;
@@ -841,7 +851,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             background: var(--sd-card-background, var(--ha-card-background, var(--card-background-color)));
             color: var(--primary-text-color);
             border-radius: var(--sd-card-radius, var(--ha-card-border-radius, 18px));
-            box-shadow: var(--ha-card-glass-inset-shadow);
+            box-shadow: var(--ha-card-box-shadow, none);
           }
 
           .header {
@@ -1080,7 +1090,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            box-shadow: var(--ha-card-glass-inset-shadow);
+            box-shadow: none;
             transition: 0s;
             cursor: pointer;
           }
@@ -1090,7 +1100,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           :host([dark-mode]) .document-tile {
-            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.8);
+            box-shadow: none;
           }
 
           .tile-top {
@@ -1870,7 +1880,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             flex-direction: column;
             gap: 6px;
             min-width: 0;
-            color: rgba(255, 255, 255, 0.68);
+            color: var(--secondary-text-color);
             font-size: .8rem;
           }
 
@@ -1881,14 +1891,14 @@ class SeafarerDocumentsCard extends HTMLElement {
             min-width: 0;
             box-sizing: border-box;
             padding: 11px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid var(--divider-color);
             border-radius: 12px;
             outline: none;
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.94);
+            background: var(--input-fill-color, var(--card-background-color));
+            color: var(--primary-text-color);
             font: inherit;
             font-size: .9rem;
-            color-scheme: dark;
+            color-scheme: normal;
           }
 
           .form-field textarea {
@@ -1912,10 +1922,10 @@ class SeafarerDocumentsCard extends HTMLElement {
             flex: 1;
             min-width: 0;
             padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid var(--divider-color);
             border-radius: 13px;
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
+            background: var(--card-background-color);
+            color: var(--primary-text-color);
             font: inherit;
             cursor: pointer;
           }
@@ -1962,7 +1972,11 @@ class SeafarerDocumentsCard extends HTMLElement {
           .form-actions .cancel-button {
             grid-column: 1;
             grid-row: 1;
-          }
+
+              color: var(--primary-text-color, inherit);
+              background: var(--card-background-color, transparent);
+              border: 1px solid var(--divider-color, currentColor);
+}
 
           .form-actions .save-button {
             grid-column: 2;
@@ -2445,9 +2459,6 @@ class SeafarerDocumentsCard extends HTMLElement {
         sailingWarnings.push(
           this._config.alert_expires_before_schedule
         );
-      }
-      if (document.renewBeforeJoining) {
-        sailingWarnings.push("Renew before scheduled start");
       }
       return `
         <div class="document-tile">
