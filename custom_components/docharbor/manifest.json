@@ -1,13 +1,14 @@
 {
   "domain": "docharbor",
   "name": "DocHarbor",
-  "version": "0.2.0",
-  "documentation": "https://github.com/prkhrjn/docharbor",
+  "codeowners": [],
+  "config_flow": true,
   "dependencies": [
     "http",
     "lovelace"
   ],
-  "codeowners": [],
-  "config_flow": true,
-  "iot_class": "calculated"
+  "documentation": "https://github.com/prkhrjn/docharbor",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/prkhrjn/docharbor/issues",
+  "version": "0.2.0"
 }
