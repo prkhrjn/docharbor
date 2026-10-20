@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.1] - HACS Catalog Preparation
+
+### Added
+- Automated HACS integration validation.
+- Automated Home Assistant Hassfest validation.
+- HACS repository metadata.
+
+### Improved
+- Public HACS installation instructions and release documentation.
+- Integration manifest metadata and formatting.
+- Translation formatting for Hassfest compatibility.
+
+### Compatibility
+- No changes to document management or dashboard card functionality.
+
+
 ## [0.2.0] - 2026-10-20
 
 ### Added
