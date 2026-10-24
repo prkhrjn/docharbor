@@ -18,6 +18,7 @@
         "title": "DocHarbor",
         "description": "Manage certificates, categories, and schedule dates.",
         "menu_options": {
+          "directory_settings": "Directory Settings",
           "add_document": "Add a certificate or document",
           "edit_select": "Edit a certificate or document",
           "remove_document": "Remove a certificate or document",
