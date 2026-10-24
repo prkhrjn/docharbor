@@ -129,3 +129,16 @@ def test_setup_preserves_user_device_names_and_entity_areas():
 def test_notification_has_no_hard_coded_dashboard_destination():
     source = (ROOT / "custom_components/docharbor/notifications.py").read_text()
     assert "/dashboard-mushroom/default_view#docs" not in source
+
+def test_notification_digest_never_includes_document_uin():
+    """Routine notification text must not expose document numbers."""
+    source = (ROOT / "custom_components/docharbor/notifications.py").read_text()
+
+    assert '"uin": doc.get' not in source
+    assert 'item["uin"]' not in source
+    assert "UIN:" not in source
+    # Keep useful renewal details in the digest.
+    assert 'message_lines.append(f"{item[\'name\']} ({item[\'category\']})")' in source
+    assert 'f"  Issue date: {format_date(item[\'issue_date\'])}"' in source
+    assert 'f"  Expiry date: {expiry_text}"' in source
+
