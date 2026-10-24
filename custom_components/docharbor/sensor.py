@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 from datetime import date
-from .expiry import evaluate, local_today, directory_type
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+from .expiry import directory_type, evaluate, local_today
+
 
 def days_remaining(expiry_date: str) -> int:
     return (date.fromisoformat(expiry_date) - local_today()).days
@@ -18,6 +20,16 @@ def days_remaining(expiry_date: str) -> int:
 
 def get_directory_type(entry: ConfigEntry) -> str:
     return directory_type(entry)
+
+
+def get_suggested_area(coordinator, entry: ConfigEntry) -> str | None:
+    """Return the configured area name for a newly created device only."""
+    area_id = entry.options.get("area_id")
+    if not area_id:
+        return None
+
+    area = ar.async_get(coordinator.hass).async_get_area(area_id)
+    return area.name if area else None
 
 
 def get_status(doc: dict, data: dict, directory_type: str = "general") -> str:
@@ -43,13 +55,12 @@ class DocumentDaysSensor(CoordinatorEntity, SensorEntity):
         self._entry = entry
 
         # Keep existing entity IDs stable.
-        self._attr_unique_id = (
-            f"{entry.entry_id}_{document_id}_days"
-        )
+        self._attr_unique_id = f"{entry.entry_id}_{document_id}_days"
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
+            suggested_area=get_suggested_area(coordinator, entry),
             manufacturer="Custom",
             model=(
                 "Schedule-Based Directory"
@@ -73,11 +84,7 @@ class DocumentDaysSensor(CoordinatorEntity, SensorEntity):
     def name(self):
         doc = self.document
 
-        return (
-            doc["name"]
-            if doc
-            else "Removed Document"
-        )
+        return doc["name"] if doc else "Removed Document"
 
     @property
     def available(self):
@@ -87,11 +94,7 @@ class DocumentDaysSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         doc = self.document
 
-        return (
-            days_remaining(doc["expiry_date"])
-            if doc
-            else None
-        )
+        return days_remaining(doc["expiry_date"]) if doc else None
 
     @property
     def icon(self):
@@ -133,24 +136,15 @@ class DocumentDaysSensor(CoordinatorEntity, SensorEntity):
             return {}
 
         data = self.coordinator.data
-        expiry = date.fromisoformat(doc["expiry_date"])
         days = days_remaining(doc["expiry_date"])
         lead = int(doc.get("renewal_lead_days", 90))
         buffer_days = int(data.get("buffer_days", 14))
 
-        joining_text = data["start_date"] if "start_date" in data else data.get("joining_date")
-        signoff_text = data["end_date"] if "end_date" in data else data.get("signoff_date")
-
-        joining = (
-            date.fromisoformat(joining_text)
-            if joining_text
-            else None
+        joining_text = (
+            data["start_date"] if "start_date" in data else data.get("joining_date")
         )
-
-        signoff = (
-            date.fromisoformat(signoff_text)
-            if signoff_text
-            else None
+        signoff_text = (
+            data["end_date"] if "end_date" in data else data.get("signoff_date")
         )
 
         result = evaluate(doc, data, self._directory_type)
@@ -163,29 +157,26 @@ class DocumentDaysSensor(CoordinatorEntity, SensorEntity):
             # Directory metadata for the custom frontend card.
             "directory_id": self._directory_id,
             "directory_name": self._entry.title,
-
             # Existing document attributes.
             "document_id": doc["id"],
             "icon": doc.get("icon") or "mdi:file-document-outline",
             "name": doc["name"],
-            "uin": doc.get("uin", ""),
             "issue_date": doc.get("issue_date"),
             "category": doc.get("category", "Other"),
             "expiry_date": doc["expiry_date"],
             "days_remaining": days,
             "renewal_lead_days": lead,
             "status": status,
-            "notes": doc.get("notes", ""),
             "start_date": joining_text,
-                "joining_date": joining_text,
+            "joining_date": joining_text,
             "end_date": signoff_text,
-                "expected_signoff_date": signoff_text,
+            "expected_signoff_date": signoff_text,
             "expires_during_schedule": expires_during_sailing,
-                "expires_during_sailing": expires_during_sailing,
+            "expires_during_sailing": expires_during_sailing,
             "expires_before_schedule": expires_before_joining,
-                "expires_before_joining": expires_before_joining,
+            "expires_before_joining": expires_before_joining,
             "renew_before_schedule": renew_before_joining,
-                "renew_before_joining": renew_before_joining,
+            "renew_before_joining": renew_before_joining,
             "planning_buffer_days": buffer_days,
         }
 
@@ -214,6 +205,7 @@ class DocumentsSummarySensor(CoordinatorEntity, SensorEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
+            suggested_area=get_suggested_area(coordinator, entry),
             manufacturer="Custom",
             model=(
                 "Schedule-Based Directory"
@@ -229,9 +221,7 @@ class DocumentsSummarySensor(CoordinatorEntity, SensorEntity):
         attention = []
 
         for doc in data["documents"]:
-            status = get_status(
-                doc, data, self._directory_type
-            )
+            status = get_status(doc, data, self._directory_type)
 
             if status != "valid":
                 attention.append(doc)
@@ -252,32 +242,23 @@ class DocumentsSummarySensor(CoordinatorEntity, SensorEntity):
             "directory_id": self._instance_id,
             "directory_name": self._entry.title,
             "directory_type": self._directory_type,
-
             # Preserve the existing summary attributes.
             "instance_id": self._instance_id,
             "total_documents": len(documents),
             "expired_documents": sum(
-                days_remaining(doc["expiry_date"]) < 0
-                for doc in documents
+                days_remaining(doc["expiry_date"]) < 0 for doc in documents
             ),
             "expiring_within_30_days": sum(
-                0 <= days_remaining(doc["expiry_date"]) <= 30
-                for doc in documents
+                0 <= days_remaining(doc["expiry_date"]) <= 30 for doc in documents
             ),
             "documents_needing_attention": [
                 {
                     "name": doc["name"],
-                    "uin": doc.get("uin", ""),
                     "issue_date": doc.get("issue_date"),
                     "expiry_date": doc["expiry_date"],
                     "category": doc.get("category", "Other"),
-                    "days_remaining": days_remaining(
-                        doc["expiry_date"]
-                    ),
-                    "status": get_status(
-                        doc, data, self._directory_type
-                    ),
-                    "notes": doc.get("notes", ""),
+                    "days_remaining": days_remaining(doc["expiry_date"]),
+                    "status": get_status(doc, data, self._directory_type),
                 }
                 for doc in self.attention_documents
             ],
@@ -299,9 +280,7 @@ async def async_setup_entry(
 
     instance["add_entities"] = async_add_entities
 
-    entities = [
-        DocumentsSummarySensor(coordinator, entry)
-    ]
+    entities = [DocumentsSummarySensor(coordinator, entry)]
 
     entities.extend(
         DocumentDaysSensor(coordinator, entry, doc["id"])

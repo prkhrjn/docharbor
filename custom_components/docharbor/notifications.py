@@ -1,16 +1,22 @@
 """Scheduled and manual notification delivery. No notifications on data persistence."""
+
 from __future__ import annotations
+
 import logging
 from datetime import date
+
 from homeassistant.core import ServiceCall
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.util import dt as dt_util
-from .expiry import evaluate, directory_type as _get_directory_type, local_today
+
+from .expiry import directory_type as _get_directory_type
+from .expiry import evaluate, local_today
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def format_date(value: str) -> str:
     return date.fromisoformat(value).strftime("%d/%m/%Y")
+
 
 def create_notification_handlers(hass, entry, data, store):
     async def async_daily_reminder(
@@ -21,12 +27,7 @@ def create_notification_handlers(hass, entry, data, store):
         """Send a daily digest or refresh the registry's live status."""
         if refresh_only:
             return
-        if (
-            not force
-            and not refresh_only
-            and now is not None
-            and now.hour < 9
-        ):
+        if not force and not refresh_only and now is not None and now.hour < 9:
             return
 
         today = local_today()
@@ -47,49 +48,37 @@ def create_notification_handlers(hass, entry, data, store):
         if not isinstance(delivery, dict):
             delivery = {}
 
-        if (
-            not refresh_only
-            and (
-                force
-                or delivery.get("date") != today_text
-            )
-        ):
+        if not refresh_only and (force or delivery.get("date") != today_text):
             delivery = {
                 "date": today_text,
                 "successful_services": [],
             }
             history["delivery"] = delivery
 
-        if not isinstance(
-            delivery.get("successful_services"), list
-        ):
+        if not isinstance(delivery.get("successful_services"), list):
             delivery["successful_services"] = []
 
         joining_text = data.get("joining_date")
         signoff_text = data.get("signoff_date")
-
-        joining = (
-            date.fromisoformat(joining_text)
-            if joining_text else None
-        )
-        signoff = (
-            date.fromisoformat(signoff_text)
-            if signoff_text else None
-        )
 
         attention = []
         for doc in data["documents"]:
             result = evaluate(doc, data, directory_type, today)
             if result["reason"] is None:
                 continue
-            attention.append({
-                "name": doc["name"], "category": doc.get("category", "Other"),
-                "uin": doc.get("uin", ""), "issue_date": doc.get("issue_date"),
-                "expiry_date": doc["expiry_date"],
-                "days_remaining": result["days_remaining"],
-                "reason": result["reason"], "priority": result["priority"],
-                "icon": doc.get("icon") or "mdi:file-document-outline",
-            })
+            attention.append(
+                {
+                    "name": doc["name"],
+                    "category": doc.get("category", "Other"),
+                    "uin": doc.get("uin", ""),
+                    "issue_date": doc.get("issue_date"),
+                    "expiry_date": doc["expiry_date"],
+                    "days_remaining": result["days_remaining"],
+                    "reason": result["reason"],
+                    "priority": result["priority"],
+                    "icon": doc.get("icon") or "mdi:file-document-outline",
+                }
+            )
 
         def attention_priority(item):
             if item["days_remaining"] < 0:
@@ -109,9 +98,7 @@ def create_notification_handlers(hass, entry, data, store):
 
         live_tag = f"docharbor_v1_{entry.entry_id}"
 
-        notify_services = entry.options.get(
-            "notify_services", []
-        )
+        notify_services = entry.options.get("notify_services", [])
         if not isinstance(notify_services, list):
             notify_services = []
 
@@ -119,14 +106,11 @@ def create_notification_handlers(hass, entry, data, store):
             service_name
             for service_name in notify_services
             if (
-                isinstance(service_name, str)
-                and service_name.startswith("mobile_app_")
+                isinstance(service_name, str) and service_name.startswith("mobile_app_")
             )
         ]
 
-        available_services = (
-            hass.services.async_services().get("notify", {})
-        )
+        available_services = hass.services.async_services().get("notify", {})
 
         # Nothing needs attention: dismiss the digest and clear the
         # existing tagged Live Activity/Live Update on selected phones.
@@ -135,8 +119,7 @@ def create_notification_handlers(hass, entry, data, store):
                 "persistent_notification",
                 "dismiss",
                 {
-                    "notification_id":
-                        f"docharbor_daily_{entry.entry_id}",
+                    "notification_id": f"docharbor_daily_{entry.entry_id}",
                 },
                 blocking=True,
             )
@@ -180,9 +163,7 @@ def create_notification_handlers(hass, entry, data, store):
                     f"Scheduled start date: {format_date(joining_text)}"
                 )
             if signoff_text:
-                message_lines.append(
-                    f"Scheduled end date: {format_date(signoff_text)}"
-                )
+                message_lines.append(f"Scheduled end date: {format_date(signoff_text)}")
             if joining_text or signoff_text:
                 message_lines.append("")
 
@@ -202,11 +183,8 @@ def create_notification_handlers(hass, entry, data, store):
             else:
                 status = f"{days} days remaining"
 
-                if item["reason"] == "Expires before scheduled start":
-                    action = "Renew before scheduled start"
-                elif (
-                    item["reason"]
-                    == "Expires during scheduled period"
+                if item["reason"] == "Expires before scheduled start" or (
+                    item["reason"] == "Expires during scheduled period"
                 ):
                     action = "Renew before scheduled start"
                 elif days <= 30:
@@ -214,25 +192,23 @@ def create_notification_handlers(hass, entry, data, store):
                 else:
                     action = "Plan renewal within the renewal window"
 
-            message_lines.append(
-                f"{item['name']} ({item['category']})"
-            )
+            message_lines.append(f"{item['name']} ({item['category']})")
 
             if item.get("uin"):
                 message_lines.append(f"  UIN: {item['uin']}")
 
             if item.get("issue_date"):
-                message_lines.append(
-                    f"  Issue date: {format_date(item['issue_date'])}"
-                )
+                message_lines.append(f"  Issue date: {format_date(item['issue_date'])}")
 
-            message_lines.extend([
-                f"  Expiry date: {expiry_text}",
-                f"  Status: {status}",
-                f"  Reason: {item['reason']}",
-                f"  Action: {action}",
-                "",
-            ])
+            message_lines.extend(
+                [
+                    f"  Expiry date: {expiry_text}",
+                    f"  Status: {status}",
+                    f"  Reason: {item['reason']}",
+                    f"  Action: {action}",
+                    "",
+                ]
+            )
 
         message = "\n".join(message_lines).strip()
 
@@ -245,27 +221,23 @@ def create_notification_handlers(hass, entry, data, store):
         # Use the same days_remaining value calculated by the expiry
         # engine for sensors, reminders and the Live Activity.
         days_remaining = most_urgent["days_remaining"]
-        expiry_short = date.fromisoformat(
-            most_urgent["expiry_date"]
-        ).strftime("%d %b %Y")
+        expiry_short = date.fromisoformat(most_urgent["expiry_date"]).strftime(
+            "%d %b %Y"
+        )
 
         if days_remaining > 0:
             days_text = (
-                f"{days_remaining} "
-                f"{'Day' if days_remaining == 1 else 'Days'} Left"
+                f"{days_remaining} {'Day' if days_remaining == 1 else 'Days'} Left"
             )
         elif days_remaining == 0:
             days_text = "Expires Today"
         else:
             days_expired = abs(days_remaining)
             days_text = (
-                f"Expired {days_expired} "
-                f"{'Day' if days_expired == 1 else 'Days'} Ago"
+                f"Expired {days_expired} {'Day' if days_expired == 1 else 'Days'} Ago"
             )
 
-        live_message = (
-            f"{entry.title} · Expires {expiry_short} · {days_text}"
-        )
+        live_message = f"{entry.title} · Expires {expiry_short} · {days_text}"
 
         # Preserve the detailed digest inside Home Assistant.
         await hass.services.async_call(
@@ -274,8 +246,7 @@ def create_notification_handlers(hass, entry, data, store):
             {
                 "title": title,
                 "message": message,
-                "notification_id":
-                    f"docharbor_daily_{entry.entry_id}",
+                "notification_id": f"docharbor_daily_{entry.entry_id}",
             },
             blocking=True,
         )
@@ -285,10 +256,7 @@ def create_notification_handlers(hass, entry, data, store):
         for service_name in selected_services:
             # On a normal scheduled digest, do not resend to devices
             # whose notification services already accepted the call.
-            if (
-                not refresh_only
-                and service_name in successful_services
-            ):
+            if not refresh_only and service_name in successful_services:
                 continue
 
             if service_name not in available_services:
@@ -311,8 +279,7 @@ def create_notification_handlers(hass, entry, data, store):
                             "tag": live_tag,
                             "live_update": True,
                             "notification_icon": (
-                                most_urgent.get("icon")
-                                or "mdi:file-document-outline"
+                                most_urgent.get("icon") or "mdi:file-document-outline"
                             ),
                             # DocHarbor visual theme. Keep the icon
                             # selected from the most urgent document.
@@ -323,7 +290,6 @@ def create_notification_handlers(hass, entry, data, store):
                             "critical_text": "Expiring",
                             "critical_text_color": "#A82945",
                             "relevance_score": 0.8,
-                            "url": "/dashboard-mushroom/default_view#docs",
                         },
                     },
                     blocking=True,
@@ -358,8 +324,7 @@ def create_notification_handlers(hass, entry, data, store):
 
         if failed_services:
             _LOGGER.warning(
-                "Reminder delivery incomplete for registry %s; "
-                "pending services: %s",
+                "Reminder delivery incomplete for registry %s; pending services: %s",
                 entry.entry_id,
                 ", ".join(failed_services),
             )
@@ -386,8 +351,7 @@ def create_notification_handlers(hass, entry, data, store):
             {
                 "title": title,
                 "message": message,
-                "notification_id":
-                    f"docharbor_test_{entry.entry_id}",
+                "notification_id": f"docharbor_test_{entry.entry_id}",
             },
             blocking=True,
         )
@@ -396,16 +360,13 @@ def create_notification_handlers(hass, entry, data, store):
         if not isinstance(notify_services, list):
             notify_services = []
 
-        available_services = (
-            hass.services.async_services().get("notify", {})
-        )
+        available_services = hass.services.async_services().get("notify", {})
 
         sent_count = 0
 
         for service_name in notify_services:
-            if (
-                not isinstance(service_name, str)
-                or not service_name.startswith("mobile_app_")
+            if not isinstance(service_name, str) or not service_name.startswith(
+                "mobile_app_"
             ):
                 continue
 
@@ -438,8 +399,7 @@ def create_notification_handlers(hass, entry, data, store):
                 )
 
         _LOGGER.info(
-            "Test completed for registry %s; %d mobile service(s) "
-            "accepted the call",
+            "Test completed for registry %s; %d mobile service(s) accepted the call",
             entry.entry_id,
             sent_count,
         )

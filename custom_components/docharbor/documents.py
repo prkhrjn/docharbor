@@ -1,14 +1,20 @@
 """Document, category and sailing operations for one directory."""
+
 from __future__ import annotations
+
 import uuid
 from datetime import date
+
 import voluptuous as vol
 from homeassistant.core import ServiceCall
 from homeassistant.exceptions import HomeAssistantError
+
 from .expiry import directory_type as _get_directory_type
+
 
 def _parse_date(value: str) -> str:
     return date.fromisoformat(value).isoformat()
+
 
 def create_document_handlers(hass, entry, data, persist, instance, coordinator):
     async def add_document(call: ServiceCall):
@@ -31,9 +37,7 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
         )
 
         if issue_date and expiry < issue_date:
-            raise HomeAssistantError(
-                "Issue Date cannot be after Expiry Date"
-            )
+            raise HomeAssistantError("Issue Date cannot be after Expiry Date")
 
         document = {
             "id": str(uuid.uuid4()),
@@ -44,10 +48,7 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
             "category": category,
             "renewal_lead_days": call.data["renewal_lead_days"],
             "notes": call.data["notes"],
-            "icon": (
-                call.data.get("icon", "").strip()
-                or "mdi:file-document-outline"
-            ),
+            "icon": (call.data.get("icon", "").strip() or "mdi:file-document-outline"),
         }
 
         data["documents"].append(document)
@@ -57,11 +58,7 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
         if add_entities:
             from .sensor import DocumentDaysSensor
 
-            add_entities([
-                DocumentDaysSensor(
-                    coordinator, entry, document["id"]
-                )
-            ])
+            add_entities([DocumentDaysSensor(coordinator, entry, document["id"])])
 
     async def add_category(call: ServiceCall):
         name = call.data["name"].strip()
@@ -71,8 +68,7 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
         categories = data["categories"]
 
         if any(
-            existing.strip().casefold() == name.casefold()
-            for existing in categories
+            existing.strip().casefold() == name.casefold() for existing in categories
         ):
             raise vol.Invalid("Category already exists")
 
@@ -103,19 +99,11 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
             )
 
         if "expiry_date" in call.data:
-            new_expiry_date = _parse_date(
-                call.data["expiry_date"]
-            )
+            new_expiry_date = _parse_date(call.data["expiry_date"])
 
         # Reject invalid date combinations before making any changes.
-        if (
-            new_issue_date
-            and new_expiry_date
-            and new_expiry_date < new_issue_date
-        ):
-            raise HomeAssistantError(
-                "Issue Date cannot be after Expiry Date"
-            )
+        if new_issue_date and new_expiry_date and new_expiry_date < new_issue_date:
+            raise HomeAssistantError("Issue Date cannot be after Expiry Date")
 
         proposed = dict(document)
         for key in ("name", "uin", "category", "renewal_lead_days", "notes", "icon"):
@@ -123,8 +111,11 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
                 proposed[key] = call.data[key]
         if not str(proposed["name"]).strip():
             raise vol.Invalid("Document name cannot be empty")
-        if not any(str(cat).casefold() == str(proposed.get("category", "Other")).strip().casefold()
-                   for cat in data["categories"]):
+        if not any(
+            str(cat).casefold()
+            == str(proposed.get("category", "Other")).strip().casefold()
+            for cat in data["categories"]
+        ):
             raise vol.Invalid("Selected category does not exist")
         proposed["issue_date"] = new_issue_date
         proposed["expiry_date"] = new_expiry_date
@@ -174,16 +165,40 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
         document_id = call.data["document_id"]
         old_count = len(data["documents"])
 
-        data["documents"] = [
-            d for d in data["documents"]
-            if d["id"] != document_id
-        ]
+        data["documents"] = [d for d in data["documents"] if d["id"] != document_id]
 
         if len(data["documents"]) == old_count:
             raise vol.Invalid("Document not found")
 
         await persist()
         await hass.config_entries.async_reload(entry.entry_id)
+
+    async def get_document_details(call: ServiceCall) -> dict:
+        """Return one document's details without exposing them in state data."""
+        document_id = call.data["document_id"]
+        document = next(
+            (item for item in data["documents"] if item["id"] == document_id),
+            None,
+        )
+
+        if document is None:
+            raise vol.Invalid("Document not found")
+
+        # This is intentionally a response-only payload. In particular, UINs
+        # and free-form notes must not be copied to sensor state attributes.
+        return {
+            "document": {
+                "document_id": document["id"],
+                "name": document["name"],
+                "uin": document.get("uin", ""),
+                "issue_date": document.get("issue_date"),
+                "expiry_date": document["expiry_date"],
+                "category": document.get("category", "Other"),
+                "renewal_lead_days": document.get("renewal_lead_days", 90),
+                "notes": document.get("notes", ""),
+                "icon": document.get("icon", "mdi:file-document-outline"),
+            }
+        }
 
     async def set_sailing_dates(call: ServiceCall):
         if _get_directory_type(entry) not in ("schedule_based", "seafarer"):
@@ -197,20 +212,30 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
         if call.data.get("clear_start_date") or call.data.get("clear_joining_date"):
             joining = None
         elif "start_date" in call.data:
-            joining = (_parse_date(call.data["start_date"])
-                       if call.data["start_date"] else None)
+            joining = (
+                _parse_date(call.data["start_date"])
+                if call.data["start_date"]
+                else None
+            )
         elif "joining_date" in call.data:
-            joining = (_parse_date(call.data["joining_date"])
-                       if call.data["joining_date"] else None)
+            joining = (
+                _parse_date(call.data["joining_date"])
+                if call.data["joining_date"]
+                else None
+            )
 
         if call.data.get("clear_end_date") or call.data.get("clear_signoff_date"):
             signoff = None
         elif "end_date" in call.data:
-            signoff = (_parse_date(call.data["end_date"])
-                       if call.data["end_date"] else None)
+            signoff = (
+                _parse_date(call.data["end_date"]) if call.data["end_date"] else None
+            )
         elif "signoff_date" in call.data:
-            signoff = (_parse_date(call.data["signoff_date"])
-                       if call.data["signoff_date"] else None)
+            signoff = (
+                _parse_date(call.data["signoff_date"])
+                if call.data["signoff_date"]
+                else None
+            )
 
         if joining and signoff and signoff < joining:
             raise vol.Invalid(
@@ -228,4 +253,12 @@ def create_document_handlers(hass, entry, data, persist, instance, coordinator):
 
         await persist()
 
-    return add_document, update_document, remove_document, add_category, remove_category, set_sailing_dates
+    return (
+        add_document,
+        update_document,
+        remove_document,
+        add_category,
+        remove_category,
+        set_sailing_dates,
+        get_document_details,
+    )
