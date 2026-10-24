@@ -70,7 +70,6 @@ def create_notification_handlers(hass, entry, data, store):
                 {
                     "name": doc["name"],
                     "category": doc.get("category", "Other"),
-                    "uin": doc.get("uin", ""),
                     "issue_date": doc.get("issue_date"),
                     "expiry_date": doc["expiry_date"],
                     "days_remaining": result["days_remaining"],
@@ -193,9 +192,6 @@ def create_notification_handlers(hass, entry, data, store):
                     action = "Plan renewal within the renewal window"
 
             message_lines.append(f"{item['name']} ({item['category']})")
-
-            if item.get("uin"):
-                message_lines.append(f"  UIN: {item['uin']}")
 
             if item.get("issue_date"):
                 message_lines.append(f"  Issue date: {format_date(item['issue_date'])}")
