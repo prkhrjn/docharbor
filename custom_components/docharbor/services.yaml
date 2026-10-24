@@ -222,3 +222,21 @@ run_reminder_now:
       selector:
         config_entry:
           integration: docharbor
+
+get_document_details:
+  name: Get document details
+  description: >-
+    Return document details for the selected directory. This response-only
+    action is used by the DocHarbor dashboard and does not change state.
+  fields:
+    directory:
+      name: Directory
+      required: true
+      selector:
+        config_entry:
+          integration: docharbor
+    document_id:
+      name: Document ID
+      required: true
+      selector:
+        text:

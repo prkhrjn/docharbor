@@ -527,7 +527,6 @@ class SeafarerDocumentsCard extends HTMLElement {
     return `seafarer-doc-icon-fingerprint:${encodeURIComponent(
       directoryId
     )}:${encodeURIComponent(JSON.stringify([
-      normalize(fields.uin),
       normalize(fields.name),
       normalize(fields.category),
       normalize(fields.issueDate ?? fields.issue_date),
@@ -651,13 +650,11 @@ class SeafarerDocumentsCard extends HTMLElement {
           status: attrs.status || "unknown",
           expiryDate: attrs.expiry_date,
           daysRemaining: Number.isFinite(days) ? days : null,
-          uin: attrs.UIN || attrs.uin || "",
           issueDate: attrs.issue_date || "",
           renewalLeadDays:
             attrs.renewal_lead_days != null
               ? Number(attrs.renewal_lead_days)
               : null,
-          notes: attrs.notes || "",
           joiningDate: attrs.joining_date || "",
           expectedSignoffDate: attrs.expected_signoff_date || "",
           expiresDuringSailing: attrs.expires_during_schedule === true || attrs.expires_during_sailing === true,
@@ -669,6 +666,24 @@ class SeafarerDocumentsCard extends HTMLElement {
         (a.daysRemaining ?? Infinity) -
         (b.daysRemaining ?? Infinity)
       );
+  }
+  async _getDocumentDetails(directoryId, documentId) {
+    const result = await this._hass.callService(
+      "docharbor",
+      "get_document_details",
+      {
+        directory: directoryId,
+        document_id: documentId,
+      },
+      undefined,
+      true,
+      true
+    );
+    const details = result?.response?.document;
+    if (!details || typeof details !== "object") {
+      throw new Error("Document details were not returned by Home Assistant.");
+    }
+    return details;
   }
   _getCategories(states, directoryId) {
     const categories = new Set();
@@ -4366,6 +4381,27 @@ class SeafarerDocumentsCard extends HTMLElement {
       this._closeDialog(this._activeDialog);
     }
     const directoryId = this._selectedDirectoryId;
+    let documentDetails;
+    try {
+      documentDetails = await this._getDocumentDetails(
+        directoryId,
+        document.documentId
+      );
+    } catch (error) {
+      console.error("Documents: unable to retrieve document details", error);
+      alert(
+        error?.message ||
+        "Unable to retrieve document details. Please try again."
+      );
+      return;
+    }
+    document = {
+      ...document,
+      uin: documentDetails.uin || "",
+      notes: documentDetails.notes || "",
+      issueDate: documentDetails.issue_date || "",
+      icon: documentDetails.icon || document.icon,
+    };
     const currentIcon = this._getDocumentIcon(document, directoryId);
     const categories = this._getCategories(
       this._hass.states,
@@ -4741,6 +4777,27 @@ class SeafarerDocumentsCard extends HTMLElement {
     if (this._activeDialog) {
       this._closeDialog(this._activeDialog);
     }
+    let documentDetails;
+    try {
+      documentDetails = await this._getDocumentDetails(
+        this._selectedDirectoryId,
+        document.documentId
+      );
+    } catch (error) {
+      console.error("Documents: unable to retrieve document details", error);
+      alert(
+        error?.message ||
+        "Unable to retrieve document details. Please try again."
+      );
+      return;
+    }
+    document = {
+      ...document,
+      uin: documentDetails.uin || "",
+      notes: documentDetails.notes || "",
+      issueDate: documentDetails.issue_date || "",
+      icon: documentDetails.icon || document.icon,
+    };
     const days = document.daysRemaining;
     let daysText = "Unavailable";
     if (days !== null && days !== undefined) {

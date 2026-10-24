@@ -434,11 +434,8 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
     async def async_step_directory_settings(
         self, user_input=None
     ):
-        """Edit the existing directory name and area."""
+        """Edit the existing directory name and type."""
         current_name = self._config_entry.title
-        current_area = self._config_entry.options.get(
-            "area_id"
-        )
         current_type = self._directory_type()
 
         if user_input is not None:
@@ -448,8 +445,8 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
                 return self.async_show_form(
                     step_id="directory_settings",
                     data_schema=self._directory_settings_schema(
-                                    current_name, current_area, current_type
-                                ),
+                        current_name, current_type
+                    ),
                     errors={"instance_name": "required"},
                 )
 
@@ -457,7 +454,6 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
             options["directory_type"] = user_input.get(
                 "directory_type", current_type
             )
-            options["area_id"] = user_input.get("area_id")
 
             self.hass.config_entries.async_update_entry(
                 self._config_entry,
@@ -472,17 +468,14 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="directory_settings",
             data_schema=self._directory_settings_schema(
-                            current_name, current_area, current_type
-                        )
+                current_name, current_type
+            ),
         )
 
-    
     @staticmethod
-    def _directory_settings_schema(
-        current_name, current_area, current_type
-    ):
-        """Build the directory settings form."""
-        schema = {
+    def _directory_settings_schema(current_name, current_type):
+        """Build the directory settings form without area editing."""
+        return vol.Schema({
             vol.Required(
                 "instance_name",
                 default=current_name,
@@ -491,16 +484,7 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
                 "directory_type",
                 default=current_type,
             ): directory_type_field(),
-        }
-
-        if current_area:
-            schema[
-                vol.Optional("area_id", default=current_area)
-            ] = area_field()
-        else:
-            schema[vol.Optional("area_id")] = area_field()
-
-        return vol.Schema(schema)
+        })
 
     
     async def async_step_add_document(self, user_input=None):

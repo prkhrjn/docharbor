@@ -94,13 +94,16 @@ and reminder history in Home Assistant's local storage.
 
 The integration does not require a separate DocHarbor cloud account.
 
+Document numbers and free-form notes are not exposed in Home Assistant entity
+state or attributes. The DocHarbor dashboard retrieves them only through a
+response-only Home Assistant action when a document's details are opened.
+
 ### Notifications
 
 - Detailed renewal reminders are created as Home Assistant
   persistent notifications.
 - These reminders may include document names, categories,
-  identification numbers, issue dates, expiry dates, and
-  scheduled start/end dates.
+  issue dates, expiry dates, and scheduled start/end dates.
 - If mobile notifications are enabled, DocHarbor sends concise
   expiry reminders through the selected Home Assistant mobile
   app notification services.
