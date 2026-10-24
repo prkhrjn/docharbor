@@ -142,3 +142,23 @@ def test_notification_digest_never_includes_document_uin():
     assert "Issue date: {format_date(item['issue_date'])}" in source
     assert "Expiry date: {expiry_text}" in source
 
+def test_area_selection_is_only_available_when_creating_a_directory():
+    """Existing directory settings must not expose area reassignment."""
+    source = (ROOT / "custom_components/docharbor/config_flow.py").read_text()
+
+    creation_schema = source.split(
+        "def _user_schema(user_input=None):", 1
+    )[1].split(
+        "@staticmethod", 1
+    )[0]
+    directory_settings = source.split(
+        "async def async_step_directory_settings(", 1
+    )[1].split(
+        "async def async_step_add_document(", 1
+    )[0]
+
+    assert 'vol.Optional("area_id")' in creation_schema
+    assert '"area_id"' not in directory_settings
+    assert "area_field()" not in directory_settings
+    assert "options = dict(self._config_entry.options)" in directory_settings
+
