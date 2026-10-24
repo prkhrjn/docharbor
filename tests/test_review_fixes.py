@@ -138,7 +138,7 @@ def test_notification_digest_never_includes_document_uin():
     assert 'item["uin"]' not in source
     assert "UIN:" not in source
     # Keep useful renewal details in the digest.
-    assert 'message_lines.append(f"{item[\'name\']} ({item[\'category\']})")' in source
-    assert 'f"  Issue date: {format_date(item[\'issue_date\'])}"' in source
-    assert 'f"  Expiry date: {expiry_text}"' in source
+    assert "message_lines.append(f\"{item['name']} ({item['category']})\")" in source
+    assert "Issue date: {format_date(item['issue_date'])}" in source
+    assert "Expiry date: {expiry_text}" in source
 
