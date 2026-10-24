@@ -103,8 +103,7 @@ response-only Home Assistant action when a document's details are opened.
 - Detailed renewal reminders are created as Home Assistant
   persistent notifications.
 - These reminders may include document names, categories,
-  identification numbers, issue dates, expiry dates, and
-  scheduled start/end dates.
+  issue dates, expiry dates, and scheduled start/end dates.
 - If mobile notifications are enabled, DocHarbor sends concise
   expiry reminders through the selected Home Assistant mobile
   app notification services.
