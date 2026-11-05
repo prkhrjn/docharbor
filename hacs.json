@@ -1,1 +1,4 @@
-{"name": "DocHarbor"}
+{
+  "name": "DocHarbor",
+  "render_readme": true
+}
