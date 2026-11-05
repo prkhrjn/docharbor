@@ -36,19 +36,15 @@ Install DocHarbor and restart Home Assistant before using the Add Integration bu
 
 ## Installation
 
-### HACS (custom repository)
+### Via HACS (recommended)
 
-DocHarbor is not yet listed in HACS's default catalog. To install it now:
-
-1. Open **HACS** in Home Assistant.
-2. Open the HACS menu (**three dots**) and select **Custom repositories**.
-3. Enter `https://github.com/prkhrjn/docharbor` and select category **Integration**.
-4. Select **Add**, then find **DocHarbor** in HACS and download it.
+1. Open **HACS** in your Home Assistant instance.
+2. Select **Integrations**.
+3. Search for **DocHarbor**.
+4. Open DocHarbor and select **Download**.
 5. Restart Home Assistant.
-6. Go to **Settings > Devices & Services > Add Integration** and search for **DocHarbor**.
-7. Complete setup and create your first document directory.
-
-Once DocHarbor is accepted into HACS's default catalog, users will be able to search for it directly without adding a custom repository.
+6. Navigate to **Settings → Devices & Services → Add Integration**.
+7. Search for **DocHarbor** and complete the setup.
 
 ## Add the dashboard card
 
@@ -82,10 +78,6 @@ Use the dashboard to add and manage documents, configure notifications, and mana
 ## Compatibility
 
 Tested with Home Assistant 2026.10.2.
-
-## Release status
-
-DocHarbor v0.2.0 is available as a public GitHub release and can be installed through HACS as a custom repository. Default HACS catalog inclusion is pending review. See [releases](https://github.com/prkhrjn/docharbor/releases) and [issues](https://github.com/prkhrjn/docharbor/issues).
 
 ## Privacy and Data Storage
 
