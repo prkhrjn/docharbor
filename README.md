@@ -20,7 +20,6 @@ A custom Home Assistant integration for managing documents, expiry dates, remind
 deployment, or other scheduled periods. DocHarbor can warn when a
 document expires before or during a scheduled period.
 
-<!-- ha-marketplace:exclude-start -->
 ## Quick Installation
 
 ### Install through HACS
@@ -46,7 +45,6 @@ Install DocHarbor and restart Home Assistant before using the Add Integration bu
 5. Restart Home Assistant.
 6. Navigate to **Settings → Devices & Services → Add Integration**.
 7. Search for **DocHarbor** and complete the setup.
-<!-- ha-marketplace:exclude-end -->
 
 ## Add the dashboard card
 
