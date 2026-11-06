@@ -149,8 +149,8 @@ def test_notification_navigation_path(
     notification_data = payload.get("data", {})
 
     assert notification_data.get("url") == expected_path
+    assert notification_data.get("clickAction") == expected_path
 
     if handler_index == 2:
-        assert notification_data.get("clickAction") == expected_path
         if expected_path is None:
             assert "data" not in payload

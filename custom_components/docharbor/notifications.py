@@ -285,7 +285,14 @@ def create_notification_handlers(hass, entry, data, store):
                         "data": {
                             "tag": live_tag,
                             "live_update": True,
-                            **({"url": navigation_path} if navigation_path else {}),
+                            **(
+                                {
+                                    "url": navigation_path,
+                                    "clickAction": navigation_path,
+                                }
+                                if navigation_path
+                                else {}
+                            ),
                             "notification_icon": (
                                 most_urgent.get("icon") or "mdi:file-document-outline"
                             ),
