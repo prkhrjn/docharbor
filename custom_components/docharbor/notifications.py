@@ -97,6 +97,17 @@ def create_notification_handlers(hass, entry, data, store):
 
         live_tag = f"docharbor_v1_{entry.entry_id}"
 
+        navigation_path = entry.options.get("navigation_path", "")
+        if not isinstance(navigation_path, str):
+            navigation_path = ""
+        navigation_path = navigation_path.strip()
+        if navigation_path and (
+            not navigation_path.startswith("/")
+            or navigation_path.startswith("//")
+        ):
+            _LOGGER.warning("Ignoring invalid DocHarbor navigation path")
+            navigation_path = ""
+
         notify_services = entry.options.get("notify_services", [])
         if not isinstance(notify_services, list):
             notify_services = []
@@ -274,6 +285,14 @@ def create_notification_handlers(hass, entry, data, store):
                         "data": {
                             "tag": live_tag,
                             "live_update": True,
+                            **(
+                                {
+                                    "url": navigation_path,
+                                    "clickAction": navigation_path,
+                                }
+                                if navigation_path
+                                else {}
+                            ),
                             "notification_icon": (
                                 most_urgent.get("icon") or "mdi:file-document-outline"
                             ),
@@ -352,6 +371,17 @@ def create_notification_handlers(hass, entry, data, store):
             blocking=True,
         )
 
+        navigation_path = entry.options.get("navigation_path", "")
+        if not isinstance(navigation_path, str):
+            navigation_path = ""
+        navigation_path = navigation_path.strip()
+        if navigation_path and (
+            not navigation_path.startswith("/")
+            or navigation_path.startswith("//")
+        ):
+            _LOGGER.warning("Ignoring invalid DocHarbor navigation path")
+            navigation_path = ""
+
         notify_services = entry.options.get("notify_services", [])
         if not isinstance(notify_services, list):
             notify_services = []
@@ -380,6 +410,16 @@ def create_notification_handlers(hass, entry, data, store):
                     {
                         "title": title,
                         "message": message,
+                        **(
+                            {
+                                "data": {
+                                    "url": navigation_path,
+                                    "clickAction": navigation_path,
+                                }
+                            }
+                            if navigation_path
+                            else {}
+                        ),
                     },
                     blocking=True,
                 )

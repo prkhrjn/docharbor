@@ -832,6 +832,10 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
                 "notify_services": user_input.get(
                     "notify_services", []
                 ),
+                "navigation_path": user_input.get(
+                    "navigation_path",
+                    self._config_entry.options.get("navigation_path", ""),
+                ).strip(),
             })
 
         services = self.hass.services.async_services().get(
@@ -868,6 +872,10 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
                     "value": service_name,
                 })
 
+        current_path = self._config_entry.options.get(
+            "navigation_path", ""
+        )
+
         schema = vol.Schema({
             vol.Optional(
                 "notify_services",
@@ -879,6 +887,10 @@ class SeafarerDocumentsOptionsFlow(config_entries.OptionsFlow):
                     mode=selector.SelectSelectorMode.LIST,
                 )
             ),
+            vol.Optional(
+                "navigation_path",
+                default=current_path,
+            ): text_field(),
         })
 
         return self.async_show_form(

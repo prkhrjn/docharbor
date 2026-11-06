@@ -328,6 +328,8 @@ if (!customElements.get("docharbor-card-editor")) {
 const DOCHARBOR_STYLE_GROUPS = Object.freeze({
   main_card: "Main Card",
   document_tiles: "Document Tiles",
+  summary_tiles: "Summary Tiles",
+  toggle_controls: "Toggle Controls",
   form_inputs: "Form Input Fields",
   selectors: "Selectors & Multi-selectors",
   buttons: "Action Buttons",
@@ -354,6 +356,8 @@ const DOCHARBOR_BUTTON_TARGETS = Object.freeze([
   "edit_category",
   "add_directory",
   "edit_directory",
+  "manage_directory",
+  "schedule_planner",
   "notify_devices",
   "save",
   "done",
@@ -742,6 +746,8 @@ class SeafarerDocumentsCard extends HTMLElement {
     const selectors = {
       main_card: ["ha-card"],
       document_tiles: [".document-tile"],
+      summary_tiles: [".summary-tile"],
+      toggle_controls: ["#toggle-document-list"],
       form_inputs: [
         ".form-field input", ".form-field textarea",
         ".document-form input", ".document-form textarea",
@@ -771,6 +777,8 @@ class SeafarerDocumentsCard extends HTMLElement {
       button_edit_category: [".edit-category-button"],
       button_add_directory: ["#create-directory-action"],
       button_edit_directory: ["#edit-directory-action"],
+      button_manage_directory: ["#manage-directory-button"],
+      button_schedule_planner: ["#sailing-dates-button"],
       button_notify_devices: ["#notify-devices-button"],
       button_save: [".save-button", ".submit-button"],
       button_done: [".device-picker-done"],
@@ -942,8 +950,8 @@ class SeafarerDocumentsCard extends HTMLElement {
             min-width: 40px;
             height: 40px;
             padding: 0;
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            background: rgba(255, 255, 255, 0.08);;
+            border: 1px solid var(--divider-color);
+            background: var(--secondary-background-color);;
             border-radius: 50%;
             color: var(--primary-text-color);
             cursor: pointer;
@@ -989,9 +997,9 @@ class SeafarerDocumentsCard extends HTMLElement {
             gap: 6px;
             min-height: 36px;
             padding: 6px 10px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--divider-color);
             border-radius: 12px;
-            background: rgba(22, 27, 38, 0.4);
+            background: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
             color: var(--primary-text-color);
             box-shadow: var(--ha-card-glass-inset-shadow);
             font: inherit;
@@ -1217,9 +1225,9 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .delete-category-button {
-            color: rgba(255, 0, 0, 0.7);
+            color: var(--error-color);
             background: transparent;
-            border: 1px solid rgba(255, 0, 0, 0.7);
+            border: 1px solid var(--error-color);
             border-radius: 22px;
             padding: 10px 16px;
             cursor: pointer;
@@ -1232,15 +1240,15 @@ class SeafarerDocumentsCard extends HTMLElement {
 
           .delete-document-button {
             padding: 10px 16px;
-            border: 1px solid var(--error-color, #f44336);
+            border: 1px solid var(--error-color, var(--error-color));
             border-radius: 10px;
             background: transparent;
-            color: var(--error-color, #f44336);
+            color: var(--error-color, var(--error-color));
             cursor: pointer;
           }
 
           .delete-document-button:hover {
-            background: rgba(244, 67, 54, 0.12);
+            background: color-mix(in srgb, var(--error-color) 12%, transparent);
           }
 
           .delete-document-button:disabled {
@@ -1258,9 +1266,9 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .management-toolbar button {
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--divider-color);
             border-radius: 14px;
-            background: rgba(22, 27, 38, 0.4);
+            background: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
             color: var(--primary-text-color);
             font-size: .85rem;
             cursor: pointer;
@@ -1346,7 +1354,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             display: flex;
             align-items: center;
             gap: 6px;
-            color: #f44336;
+            color: var(--error-color);
             font-size: 0.75rem;
             font-weight: 600;
             line-height: 1.35;
@@ -1355,7 +1363,7 @@ class SeafarerDocumentsCard extends HTMLElement {
 
           .tile-sailing-warning ha-icon {
             flex: 0 0 auto;
-            color: #f44336;
+            color: var(--error-color);
             --mdc-icon-size: 18px;
             animation: sailing-icon-blink 1s ease-in-out infinite;
           }
@@ -1392,9 +1400,9 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .sailing-dates-toolbar button {
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--divider-color);
             border-radius: 14px;
-            background: rgba(22, 27, 38, 0.4);
+            background: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
             color: var(--primary-text-color);
             font-size: 0.85rem;
             cursor: pointer;
@@ -1494,7 +1502,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             display: block;
             margin-bottom: 8px;
             --mdc-icon-size: 21px;
-            color: white;
+            color: var(--primary-text-color);
           }
 
           .summary-value {
@@ -1558,28 +1566,27 @@ class SeafarerDocumentsCard extends HTMLElement {
             min-width: 0;
             box-sizing: border-box;
             padding: 10px 38px 10px 13px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid var(--divider-color);
             border-radius: 14px;
             outline: none;
-            background-color: rgba(22, 27, 38, 0.4);
-            color: rgba(255, 255, 255, 0.94);
+            background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+            color: var(--primary-text-color);
             font: inherit;
             cursor: pointer;
-            color-scheme: dark;
-            box-shadow: var(--ha-card-glass-inset-shadow);
+                        box-shadow: var(--ha-card-glass-inset-shadow);
           }
 
           #directory-select:focus,
           .directory-select:focus {
-            border-color: rgba(255, 255, 255, 0.32);
+            border-color: var(--primary-color);
             box-shadow: var(--ha-card-glass-inset-shadow);
           }
 
           #directory-select option,
           .directory-select option,
           .form-field option {
-            background: #171c28;
-            color: #f4f5f8;
+            background: var(--card-background-color);
+            color: var(--primary-text-color);
           }
 
           .directory-select:active {
@@ -1613,9 +1620,9 @@ class SeafarerDocumentsCard extends HTMLElement {
             background: rgba(0, 0, 0, 0.45);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 1px solid var(--sd-popup-border, rgba(255, 255, 255, 0.16));
+            border: 1px solid var(--sd-popup-border, var(--divider-color));
             box-shadow: var(--ha-card-glass-inset-shadow);
-            color: rgba(255, 255, 255, 0.94);
+            color: var(--primary-text-color);
           }
 
           .details-header {
@@ -1652,7 +1659,7 @@ class SeafarerDocumentsCard extends HTMLElement {
 
           .details-icon ha-icon {
             --mdc-icon-size: 30px;
-            color: rgba(255, 255, 255, 0.92);
+            color: var(--primary-text-color);
           }
 
           .details-title {
@@ -1661,7 +1668,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             font-size: 1.15rem;
             font-weight: 600;
             line-height: 1.4;
-            color: rgba(255, 255, 255, 0.96);
+            color: var(--primary-text-color);
             overflow-wrap: anywhere;
           }
 
@@ -1682,10 +1689,10 @@ class SeafarerDocumentsCard extends HTMLElement {
             justify-content: center;
             box-sizing: border-box;
             padding: 0;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid var(--divider-color);
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.10);
-            color: rgba(255, 255, 255, 0.95);
+            background: var(--secondary-background-color);
+            color: var(--primary-text-color);
             font: inherit;
             font-size: 23px;
             line-height: 1;
@@ -1693,7 +1700,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .form-close:hover {
-            background: rgba(255, 255, 255, 0.17);
+            background: var(--secondary-background-color);
           }
 
           .details-content {
@@ -1729,7 +1736,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             font-size: .78rem;
             line-height: 1.4;
             text-align: left;
-            color: rgba(255, 255, 255, 0.60);
+            color: var(--secondary-text-color);
             overflow-wrap: anywhere;
           }
 
@@ -1742,7 +1749,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             font-size: .95rem;
             line-height: 1.5;
             text-align: left;
-            color: rgba(255, 255, 255, 0.92);
+            color: var(--primary-text-color);
             overflow-wrap: anywhere;
             white-space: normal;
           }
@@ -1752,9 +1759,9 @@ class SeafarerDocumentsCard extends HTMLElement {
             align-items: center;
             gap: 12px;
             padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid var(--divider-color);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--secondary-background-color);
           }
 
           .icon-picker-current {
@@ -1765,7 +1772,7 @@ class SeafarerDocumentsCard extends HTMLElement {
 
           .icon-picker-current-name {
             overflow-wrap: anywhere;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--primary-text-color);
             font-size: 0.85rem;
           }
 
@@ -1787,10 +1794,10 @@ class SeafarerDocumentsCard extends HTMLElement {
             min-width: 0;
             aspect-ratio: 1;
             padding: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid var(--divider-color);
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.85);
+            background: var(--secondary-background-color);
+            color: var(--primary-text-color);
             cursor: pointer;
           }
 
@@ -1799,12 +1806,12 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .icon-picker-option:hover {
-            background: rgba(255, 255, 255, 0.12);
+            background: var(--divider-color);
           }
 
           .icon-picker-option.selected {
             border-color: var(--primary-color);
-            background: rgba(100, 150, 220, 0.22);
+            background: color-mix(in srgb, var(--primary-color) 22%, transparent);
             color: var(--primary-color);
           }
 
@@ -1814,7 +1821,7 @@ class SeafarerDocumentsCard extends HTMLElement {
 
           .icon-picker-hint {
             font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.55);
+            color: var(--secondary-text-color);
           }
 
           .form-backdrop {
@@ -1846,8 +1853,8 @@ class SeafarerDocumentsCard extends HTMLElement {
             box-sizing: border-box;
             padding: 20px;
             border-radius: 20px;
-            background: rgba(28, 30, 38, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: var(--ha-card-background, var(--card-background-color));
+            border: 1px solid var(--divider-color);
             box-shadow: var(--ha-card-glass-inset-shadow);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -1861,7 +1868,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             margin-bottom: 18px;
             font-size: 1.15rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
+            color: var(--primary-text-color);
           }
 
           .form-title {
@@ -1913,8 +1920,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             color: var(--primary-text-color);
             font: inherit;
             font-size: .9rem;
-            color-scheme: normal;
-          }
+                      }
 
           .form-field textarea {
             min-height: 80px;
@@ -1924,7 +1930,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           .form-field input:focus,
           .form-field select:focus,
           .form-field textarea:focus {
-            border-color: rgba(255, 255, 255, 0.38);
+            border-color: var(--primary-color);
           }
 
           .form-actions {
@@ -1950,8 +1956,8 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .form-actions .primary {
-            background: rgba(100, 150, 220, 0.7);
-            border-color: rgba(140, 180, 240, 0.35);
+            background: var(--primary-color);
+            border-color: var(--primary-color);
           }
 
           .form-actions button:disabled {
@@ -1960,7 +1966,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           .form-error {
-            color: #ff9999;
+            color: var(--error-color);
             font-size: .85rem;
             white-space: pre-wrap;
           }
@@ -2003,13 +2009,13 @@ class SeafarerDocumentsCard extends HTMLElement {
             grid-row: 2;
             justify-self: center;
             width: calc(50% - 5px);
-            border: 1px solid rgba(255, 0, 0, 0.7);
+            border: 1px solid var(--error-color);
             background: transparent;
-            color: rgba(255, 0, 0, 0.7);
+            color: var(--error-color);
           }
 
           .form-actions .delete-document-button:hover {
-            background: rgba(244, 67, 54, 0.12);
+            background: color-mix(in srgb, var(--error-color) 12%, transparent);
           }
 
           .form-actions button:disabled {
@@ -2040,10 +2046,10 @@ class SeafarerDocumentsCard extends HTMLElement {
             overflow-y: auto;
             box-sizing: border-box;
             padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid var(--divider-color);
             border-radius: 20px;
-            background: rgba(28, 30, 38, 0.6);
-            color: rgba(255, 255, 255, 0.95);
+            background: var(--ha-card-background, var(--card-background-color));
+            color: var(--primary-text-color);
             box-shadow: var(--ha-card-glass-inset-shadow);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -2057,7 +2063,7 @@ class SeafarerDocumentsCard extends HTMLElement {
             margin-bottom: 18px;
             font-size: 1.15rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
+            color: var(--primary-text-color);
           }
 
           .dialog-header h2 {
@@ -2071,9 +2077,9 @@ class SeafarerDocumentsCard extends HTMLElement {
             width: 36px;
             height: 36px;
             flex: 0 0 36px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid var(--divider-color);
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--secondary-background-color);
             color: white;
             font-size: 24px;
             cursor: pointer;
@@ -2097,17 +2103,17 @@ class SeafarerDocumentsCard extends HTMLElement {
             width: 100%;
             min-height: 42px;
             padding: 10px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid var(--divider-color);
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--secondary-background-color);
             color: white;
             font: inherit;
             cursor: pointer;
           }
 
           .dialog-body button.primary-button {
-            background: rgba(70, 125, 205, 0.85);
-            border-color: rgba(140, 180, 240, 0.4);
+            background: var(--primary-color);
+            border-color: var(--primary-color);
           }
 
           .dialog-body button:disabled {
@@ -2122,7 +2128,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           }
 
           #directory-flow-fields label {
-            color: rgba(255, 255, 255, 0.75);
+            color: var(--secondary-text-color);
             font-size: 0.85rem;
             text-transform: capitalize;
           }
@@ -2135,23 +2141,22 @@ class SeafarerDocumentsCard extends HTMLElement {
             min-height: 42px;
             padding: 11px 12px;
             box-sizing: border-box;
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            border: 1px solid var(--divider-color);
             border-radius: 12px;
             outline: none;
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.94);
+            background: var(--secondary-background-color);
+            color: var(--primary-text-color);
             font: inherit;
             font-size: 0.9rem;
-            color-scheme: dark;
-          }
+                      }
 
           #directory-flow-fields input:focus,
           #directory-flow-fields select:focus {
-            border-color: rgba(255, 255, 255, 0.38);
+            border-color: var(--primary-color);
           }
 
           #directory-flow-error {
-            color: #ff9999;
+            color: var(--error-color);
             white-space: pre-wrap;
             overflow-wrap: anywhere;
           }
@@ -2621,8 +2626,8 @@ class SeafarerDocumentsCard extends HTMLElement {
 
             .manager-actions button {
               box-sizing: border-box;
-              border: 1px solid rgba(255, 255, 255, 0.16);
-              background: rgba(255, 255, 255, 0.08);
+              border: 1px solid var(--divider-color);
+              background: var(--secondary-background-color);
               color: var(--primary-text-color);
               width: 100%;
               min-width: 0;
@@ -3100,26 +3105,25 @@ class SeafarerDocumentsCard extends HTMLElement {
           min-width: 0;
           min-height: 44px;
           padding: 10px 13px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
           font: inherit;
           outline: none;
-          color-scheme: dark;
-          box-shadow: var(--ha-card-glass-inset-shadow);
+                    box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .directory-content input:focus,
         .directory-content select:focus,
         .directory-content textarea:focus {
-          border-color: rgba(255, 255, 255, 0.32);
+          border-color: var(--primary-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .directory-content option {
-          background: #171c28;
-          color: #f4f5f8;
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
         }
 
         .directory-content select[multiple] {
@@ -3141,9 +3145,9 @@ class SeafarerDocumentsCard extends HTMLElement {
 
         .directory-actions button {
           box-sizing: border-box;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
+          border: 1px solid var(--divider-color);
+          background: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
           width: 100%;
           min-width: 0;
           height: 44px;
@@ -3389,6 +3393,29 @@ class SeafarerDocumentsCard extends HTMLElement {
           color: var(--primary-text-color);
         }
 
+        .notify-form .form-field {
+          margin-top: 14px;
+          color: inherit;
+          font-size: inherit;
+        }
+
+        .notify-form .form-field label {
+          color: inherit;
+          font-size: inherit;
+        }
+
+        .notify-form .form-field input#notify-navigation-path {
+          min-height: 44px;
+          padding: 10px 13px;
+          border-radius: 14px;
+          box-shadow: var(--ha-card-glass-inset-shadow);
+        }
+
+        .notify-form .form-field input#notify-navigation-path:focus {
+          border-color: var(--primary-color);
+          box-shadow: var(--ha-card-glass-inset-shadow);
+        }
+
         .notify-content select {
           box-sizing: border-box;
           display: block;
@@ -3423,8 +3450,8 @@ class SeafarerDocumentsCard extends HTMLElement {
 
         .notify-actions button {
           box-sizing: border-box;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--divider-color);
+          background: var(--secondary-background-color);
           color: white;
           width: 100%;
           min-width: 0;
@@ -3461,11 +3488,11 @@ class SeafarerDocumentsCard extends HTMLElement {
           text-align: left;
           width: 100%;
           min-height: 44px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
           padding: 10px 13px;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
           font: inherit;
           cursor: pointer;
           box-shadow: var(--ha-card-glass-inset-shadow);
@@ -3473,7 +3500,7 @@ class SeafarerDocumentsCard extends HTMLElement {
         }
 
         .device-picker-trigger:focus {
-          border-color: rgba(255, 255, 255, 0.32);
+          border-color: var(--primary-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
@@ -3484,10 +3511,10 @@ class SeafarerDocumentsCard extends HTMLElement {
         .device-picker-panel {
           margin-top: 8px;
           padding: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
@@ -3506,7 +3533,7 @@ class SeafarerDocumentsCard extends HTMLElement {
           gap: 12px;
           min-height: 42px;
           padding: 8px 6px;
-          color: rgba(255, 255, 255, 0.94);
+          color: var(--primary-text-color);
           cursor: pointer;
           overflow-wrap: anywhere;
         }
@@ -3558,6 +3585,19 @@ class SeafarerDocumentsCard extends HTMLElement {
               <div class="device-picker-options" role="group" aria-label="Available devices"></div>
               <button type="button" class="device-picker-done">Done</button>
             </div>
+            <div class="form-field">
+              <label for="notify-navigation-path">Navigation Path (optional)</label>
+              <input
+                id="notify-navigation-path"
+                type="text"
+                maxlength="255"
+                placeholder="/dashboard-mushroom/default_view"
+                autocomplete="off"
+              />
+            </div>
+            <p class="notify-help">
+              Optional. Opens this Home Assistant path when the notification is tapped.
+            </p>
             <p class="notify-error" role="alert"></p>
             <div class="notify-actions">
               <button type="button" class="cancel-button">Cancel</button>
@@ -3604,6 +3644,10 @@ class SeafarerDocumentsCard extends HTMLElement {
     try {
       const schema = flow.data_schema || [];
       const field = schema.find(item => item.name === "notify_services");
+      const pathField = schema.find(item => item.name === "navigation_path");
+      root.querySelector("#notify-navigation-path").value = String(
+        pathField?.value ?? pathField?.default ?? ""
+      );
       const selector = field?.selector?.select;
       const options = selector?.options || [];
       const selectedValues = field?.value ?? field?.default ?? [];
@@ -3646,6 +3690,9 @@ class SeafarerDocumentsCard extends HTMLElement {
         saveButton.textContent = "Saving…";
         const data = {
           notify_services: Array.from(selectedDevices),
+          navigation_path: root.querySelector(
+            "#notify-navigation-path"
+          ).value.trim(),
         };
         try {
           const nextFlow = await this._hass.callApi(
@@ -3776,26 +3823,25 @@ class SeafarerDocumentsCard extends HTMLElement {
           height: 44px;
           margin: 0;
           padding: 10px 13px;
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
           font: inherit;
-          color-scheme: dark;
-          outline: none;
+                    outline: none;
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .category-dialog-content .form-field input:focus,
         .category-dialog-content .form-field select:focus {
-          border-color: rgba(255, 255, 255, 0.32);
+          border-color: var(--primary-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
           outline: none;
         }
 
         .category-dialog-content .form-field option {
-          background: #171c28;
-          color: #f4f5f8;
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
         }
 
         .category-warning {
@@ -4126,26 +4172,25 @@ class SeafarerDocumentsCard extends HTMLElement {
           height: 44px;
           padding: 10px 13px;
           margin: 0;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
           outline: none;
           font: inherit;
-          color-scheme: dark;
-          box-shadow: var(--ha-card-glass-inset-shadow);
+                    box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .add-document-content .form-field input:focus,
         .add-document-content .form-field select:focus,
         .add-document-content .form-field textarea:focus {
-          border-color: rgba(255, 255, 255, 0.32);
+          border-color: var(--primary-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .add-document-content .form-field option {
-          background: #171c28;
-          color: #f4f5f8;
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
         }
 
         .add-document-content .form-field input[type="date"] {
@@ -4472,14 +4517,13 @@ class SeafarerDocumentsCard extends HTMLElement {
           min-width: 0;
           margin: 0;
           padding: 10px 13px;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
           outline: none;
           font: inherit;
-          color-scheme: dark;
-          box-shadow: var(--ha-card-glass-inset-shadow);
+                    box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .edit-document-content .form-field input,
@@ -4490,13 +4534,13 @@ class SeafarerDocumentsCard extends HTMLElement {
         .edit-document-content .form-field input:focus,
         .edit-document-content .form-field select:focus,
         .edit-document-content .form-field textarea:focus {
-          border-color: rgba(255, 255, 255, 0.32);
+          border-color: var(--primary-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .edit-document-content .form-field option {
-          background: #171c28;
-          color: #f4f5f8;
+          background: var(--card-background-color);
+          color: var(--primary-text-color);
         }
 
         .edit-document-content .form-field input[type="date"] {
@@ -5096,18 +5140,17 @@ class SeafarerDocumentsCard extends HTMLElement {
           height: 44px;
           padding: 10px 13px;
           margin: 0;
-          background-color: rgba(22, 27, 38, 0.4);
-          color: rgba(255, 255, 255, 0.94);
-          border: 1px solid rgba(255, 255, 255, 0.16);
+          background-color: var(--input-fill-color, var(--secondary-background-color, var(--card-background-color)));
+          color: var(--primary-text-color);
+          border: 1px solid var(--divider-color);
           border-radius: 14px;
           outline: none;
           font: inherit;
-          color-scheme: dark;
-          box-shadow: var(--ha-card-glass-inset-shadow);
+                    box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
         .sailing-dates-content .form-field input:focus {
-          border-color: rgba(255, 255, 255, 0.32);
+          border-color: var(--primary-color);
           box-shadow: var(--ha-card-glass-inset-shadow);
         }
 
