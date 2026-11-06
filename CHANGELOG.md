@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.0.0] - 2026-11-07
+
+### Added
+- Configurable notification navigation path through the integration options.
+- Navigation support for live and scheduled notifications, including Android notification tap actions.
+- Expanded card appearance customization for summary tiles and toggle controls.
+- Additional styling targets for directory management and the schedule planner.
+
+### Improved
+- Home Assistant theme-aware styling across the dashboard card, forms, dialogs, selectors, buttons and document details.
+- Document privacy: sensitive document details, including document numbers and notes, are excluded from entity state and attributes and retrieved through a response-only action when needed.
+- Notification privacy by removing document UINs from notification digests.
+- Notification navigation path validation to reject invalid or external paths.
+- Preservation of user-defined device names and areas.
+
+### Changed
+- Directory areas can be selected during directory creation but are no longer editable through Directory Settings.
+- Refined notification and dashboard interactions.
+
 ## [0.2.1] - HACS Catalog Preparation
 
 ### Added
